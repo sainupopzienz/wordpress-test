@@ -38,7 +38,7 @@ jobs:
 
       - name: Stop Docker Compose services
         run: |
-          ssh $REMOTE_USER@$REMOTE_HOST "sudo docker compose -f /home/ubuntu/wordpress,yml down"
+          ssh $REMOTE_USER@$REMOTE_HOST "sudo docker compose -f /home/ubuntu/wordpress.yml down"
 
       - name: Clean and prepare temporary deployment directory
         run: |
