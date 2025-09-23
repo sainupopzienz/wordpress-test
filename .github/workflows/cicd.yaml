@@ -1,0 +1,64 @@
+name: Deploy WordPress Docker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      REMOTE_USER: ubuntu
+      REMOTE_HOST: 52.90.3.182
+      REMOTE_PATH: /home/ubuntu/wordpress
+      REMOTE_TMP_PATH: /tmp/deploy-area
+      BACKUP_PATH: /home/ubuntu
+      TIMESTAMP: ${{ github.run_id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y openssh-client tar rsync
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add remote host to known_hosts
+        run: ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
+
+      - name: Backup remote WordPress directory
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "sudo tar czf $BACKUP_PATH/wordpress_backup_${TIMESTAMP}.tar.gz -C $REMOTE_PATH ."
+
+      - name: Stop Docker Compose services
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "sudo docker compose -f /home/ubuntu/docker-compose.yml down"
+
+      - name: Clean and prepare temporary deployment directory
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "rm -rf $REMOTE_TMP_PATH && mkdir -p $REMOTE_TMP_PATH"
+
+      - name: Rsync repository contents (excluding workflow files)
+        run: |
+          rsync -av --exclude='.github' --exclude='.git' --delete ./ $REMOTE_USER@$REMOTE_HOST:$REMOTE_TMP_PATH/
+
+      - name: Deploy files and set permissions
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "
+            sudo rm -rf $REMOTE_PATH;
+            sudo cp -r $REMOTE_TMP_PATH $REMOTE_PATH;
+            sudo chown -R www-data:www-data $REMOTE_PATH;
+            sudo find $REMOTE_PATH -type d -exec chmod 755 {} +;
+            sudo find $REMOTE_PATH -type f -exec chmod 644 {} +;
+          "
+
+      - name: Restart Docker Compose services
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "sudo docker compose -f /home/ubuntu/docker-compose.yml up -d"
+
