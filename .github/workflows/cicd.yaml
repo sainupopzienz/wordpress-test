@@ -32,6 +32,20 @@ jobs:
       - name: Add remote host to known_hosts
         run: ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
 
+      - name: Backup WordPress MySQL database
+        env:
+          DB_CONTAINER_NAME: wordpress_db         # Update to your MySQL container name
+          DB_USER: root
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: wordpress_db                    # Update to your DB name
+          DB_BACKUP_PATH: /home/ubuntu/db-backup
+          TIMESTAMP: ${{ github.run_id }}
+        run: |
+          ssh $REMOTE_USER@$REMOTE_HOST "
+            mkdir -p $DB_BACKUP_PATH;
+            sudo docker exec $DB_CONTAINER_NAME sh -c 'mysqldump -u$DB_USER -p$DB_PASSWORD $DB_NAME' > $DB_BACKUP_PATH/wordpress_backup_${TIMESTAMP}.sql
+          "
+
       - name: Backup remote WordPress directory
         run: |
           ssh $REMOTE_USER@$REMOTE_HOST "sudo tar czf $BACKUP_PATH/wordpress_backup_${TIMESTAMP}.tar.gz -C $REMOTE_PATH ."
@@ -61,4 +75,3 @@ jobs:
       - name: Restart Docker Compose services
         run: |
           ssh $REMOTE_USER@$REMOTE_HOST "sudo docker compose -f /home/ubuntu/wordpress.yml up -d"
-
