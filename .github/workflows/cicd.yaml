@@ -56,7 +56,7 @@ jobs:
 
       - name: Clean and prepare temporary deployment directory
         run: |
-          ssh $REMOTE_USER@$REMOTE_HOST "rm -rf $REMOTE_TMP_PATH && mkdir -p $REMOTE_TMP_PATH"
+          ssh $REMOTE_USER@$REMOTE_HOST "sudo rm -rf $REMOTE_TMP_PATH && mkdir -p $REMOTE_TMP_PATH"
 
       - name: Rsync repository contents (excluding workflow files)
         run: |
