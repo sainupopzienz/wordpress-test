@@ -11,7 +11,7 @@ jobs:
 
     env:
       REMOTE_USER: ubuntu
-      REMOTE_HOST: 54.242.66.86
+      REMOTE_HOST: 3.88.159.145
       REMOTE_PATH: /home/ubuntu/wordpress
       REMOTE_TMP_PATH: /tmp/deploy-area
       BACKUP_PATH: /home/ubuntu
