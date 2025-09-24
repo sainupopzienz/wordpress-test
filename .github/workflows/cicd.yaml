@@ -34,10 +34,10 @@ jobs:
 
       - name: Backup WordPress MySQL database
         env:
-          DB_CONTAINER_NAME: wordpress_db         # Update to your MySQL container name
-          DB_USER: root
+          DB_CONTAINER_NAME: ${{ secrets.DB_CONTAINER_NAME }}        # Update to your MySQL container name
+          DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: wordpress_db                    # Update to your DB name
+          DB_NAME: ${{ secrets.DB_NAME }}                  # Update to your DB name
           DB_BACKUP_PATH: /home/ubuntu/db-backup
           TIMESTAMP: ${{ github.run_id }}
         run: |
